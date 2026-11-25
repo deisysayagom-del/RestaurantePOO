@@ -1,0 +1,322 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Toma de Pedidos · ComandaPro</title>
+    <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+    <a href="#contenido-principal" class="skip-link">Saltar al contenido principal</a>
+
+    <header>
+        <div class="header-inner">
+            <div class="brand">
+                <img src="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='36' height='36' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='2'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Cpath d='M8 12h8M12 8v8'/%3E%3C/svg%3E"
+                     alt="Logotipo de ComandaPro" width="36" height="36" />
+                <h1>ComandaPro · Gestión Gastronómica</h1>
+            </div>
+            <nav aria-label="Navegación principal">
+                <ul>
+                    <li><a href="index.html">1. Menú y Productos</a></li>
+                    <li><a href="pedidos.html" aria-current="page">2. Toma de Pedidos</a></li>
+                    <li><a href="cocina.html">3. Monitor de Cocina</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main id="contenido-principal">
+        <div class="grid-2">
+            <section class="card" aria-labelledby="titulo-form-pedido">
+                <h2 id="titulo-form-pedido">Registrar Nueva Orden</h2>
+                <div id="alerta-pedido" class="status-box hidden" role="alert" aria-live="assertive"></div>
+
+                <form id="form-pedido">
+                    <div class="form-group">
+                        <label for="ped-numero">Número de orden</label>
+                        <input type="number" id="ped-numero" min="1" placeholder="Ej: 101" required />
+                    </div>
+
+                    <div class="form-group">
+                        <label for="ped-tipo">Modalidad de atención</label>
+                        <select id="ped-tipo">
+                            <option value="mesa">Consumo en Mesa (Sin recargo)</option>
+                            <option value="para-llevar">Para Llevar (Con opción de empaque térmico)</option>
+                            <option value="domicilio">Entrega a Domicilio (Tarifa según zona)</option>
+                        </select>
+                    </div>
+
+                    <!-- Campos Mesa -->
+                    <div id="campos-mesa">
+                        <div class="form-group">
+                            <label for="mesa-numero">Número de mesa</label>
+                            <input type="number" id="mesa-numero" min="1" value="1" />
+                        </div>
+                        <div class="form-group">
+                            <label for="mesa-capacidad">Capacidad de la mesa (comensales)</label>
+                            <input type="number" id="mesa-capacidad" min="1" value="4" />
+                        </div>
+                    </div>
+
+                    <!-- Campos Para Llevar -->
+                    <div id="campos-para-llevar" class="hidden">
+                        <div class="form-group">
+                            <label for="llevar-cliente">Nombre del cliente</label>
+                            <input type="text" id="llevar-cliente" placeholder="Ej: Laura Gómez" />
+                        </div>
+                        <div class="form-group checkbox-row">
+                            <input type="checkbox" id="llevar-empaque" />
+                            <label for="llevar-empaque">Incluir empaque térmico especial</label>
+                        </div>
+                        <div class="form-group">
+                            <label for="llevar-hora">Hora estimada de recogida (opcional)</label>
+                            <input type="datetime-local" id="llevar-hora" />
+                        </div>
+                    </div>
+
+                    <!-- Campos Domicilio -->
+                    <div id="campos-domicilio" class="hidden">
+                        <div class="form-group">
+                            <label for="dom-direccion">Dirección de entrega</label>
+                            <input type="text" id="dom-direccion" placeholder="Ej: Calle 45 Sur # 28-10" />
+                        </div>
+                        <div class="form-group">
+                            <label for="dom-repartidor">Domiciliario asignado</label>
+                            <input type="text" id="dom-repartidor" placeholder="Ej: Carlos Pérez" />
+                        </div>
+                        <div class="form-group">
+                            <label for="dom-telefono">Teléfono de contacto del domiciliario</label>
+                            <input type="text" id="dom-telefono" placeholder="Ej: 3001234567" />
+                        </div>
+                        <div class="form-group">
+                            <label for="dom-zona">Zona de cobertura</label>
+                            <input type="text" id="dom-zona" placeholder="Ej: Zona Centro" />
+                        </div>
+                        <div class="form-group">
+                            <label for="dom-costo">Costo de envío de la zona (COP)</label>
+                            <input type="number" id="dom-costo" min="0" step="500" value="4000" />
+                        </div>
+                        <div class="form-group">
+                            <label for="dom-tiempo">Tiempo estimado de entrega (minutos)</label>
+                            <input type="number" id="dom-tiempo" min="1" value="20" />
+                        </div>
+                    </div>
+
+                    <hr style="margin:1.25rem 0; border:0; border-top:1px solid #cbd5e1;" />
+
+                    <h3>Selección de Platos y Bebidas</h3>
+                    <div id="carga-select-productos" class="status-box status-loading" role="status">Cargando carta disponible...</div>
+
+                    <div class="form-group">
+                        <label for="sel-producto">Producto de la carta</label>
+                        <select id="sel-producto"></select>
+                    </div>
+                    <div class="form-group">
+                        <label for="sel-cantidad">Cantidad</label>
+                        <input type="number" id="sel-cantidad" min="1" value="1" />
+                    </div>
+                    <button type="button" id="btn-agregar-item" class="btn-secondary">Agregar a la Orden</button>
+
+                    <div style="margin-top:1rem;">
+                        <h4>Detalle de la orden actual</h4>
+                        <div id="lista-items-vacia" class="status-box status-empty">Aún no has agregado productos a esta orden.</div>
+                        <ul id="lista-items-pedido" style="padding-left:1.2rem;"></ul>
+                    </div>
+
+                    <button type="submit" class="btn-primary" style="margin-top:1rem; width:100%;">Confirmar y Enviar Orden</button>
+                </form>
+            </section>
+
+            <!-- Comprobante comercial para el operador o cliente -->
+            <section class="card" aria-labelledby="titulo-respuesta">
+                <h2 id="titulo-respuesta">Resumen del Pedido Registrado</h2>
+                <p style="color:var(--text-muted);">
+                    Al confirmar la orden, el sistema calcula automáticamente los recargos según la modalidad elegida, estima el tiempo de entrega y envía la comanda a cocina.
+                </p>
+                <div id="resultado-pedido" class="status-box status-empty">
+                    Completa los datos de la orden y presiona "Confirmar y Enviar Orden" para generar el comprobante.
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <footer>
+        Hecho con ❤️ · ComandaPro · Gestión Gastronómica · 2026
+    </footer>
+
+    <script src="app.js"></script>
+    <script>
+        const selectTipo = document.getElementById("ped-tipo");
+        const selProducto = document.getElementById("sel-producto");
+        const listaItemsUl = document.getElementById("lista-items-pedido");
+        const listaItemsVacia = document.getElementById("lista-items-vacia");
+        const alertaPedido = document.getElementById("alerta-pedido");
+        const resultadoPedido = document.getElementById("resultado-pedido");
+
+        let catalogoProductos = [];
+        let itemsSeleccionados = [];
+
+        function actualizarVisibilidadCampos() {
+            const tipo = selectTipo.value;
+            document.getElementById("campos-mesa").classList.toggle("hidden", tipo !== "mesa");
+            document.getElementById("campos-para-llevar").classList.toggle("hidden", tipo !== "para-llevar");
+            document.getElementById("campos-domicilio").classList.toggle("hidden", tipo !== "domicilio");
+        }
+
+        async function cargarCatalogoSelect() {
+            const carga = document.getElementById("carga-select-productos");
+            try {
+                catalogoProductos = await consumirApi("/Productos");
+                carga.classList.add("hidden");
+                selProducto.innerHTML = "";
+
+                if (!catalogoProductos || catalogoProductos.length === 0) {
+                    const opt = document.createElement("option");
+                    opt.value = "";
+                    opt.textContent = "No hay productos creados (ve primero a Menú y Productos)";
+                    selProducto.appendChild(opt);
+                    return;
+                }
+
+                catalogoProductos.forEach(p => {
+                    const opt = document.createElement("option");
+                    opt.value = p.codigo;
+                    opt.textContent = `${p.codigo} - ${p.nombre} (${formatearMoneda(p.precio)})`;
+                    selProducto.appendChild(opt);
+                });
+            } catch (error) {
+                carga.classList.add("hidden");
+                mostrarAlerta(alertaPedido, error.message, "error");
+            }
+        }
+
+        function renderizarItems() {
+            listaItemsUl.innerHTML = "";
+            listaItemsVacia.classList.toggle("hidden", itemsSeleccionados.length > 0);
+
+            itemsSeleccionados.forEach((item, index) => {
+                const li = document.createElement("li");
+                li.style.marginBottom = "0.5rem";
+                li.innerHTML = `
+                        <strong>${item.cantidad}x</strong> ${item.nombre} (${item.codigoProducto})
+                        <button type="button" class="btn-danger" style="padding:0.2rem 0.5rem; margin-left:0.5rem;">Quitar</button>
+                    `;
+                li.querySelector("button").addEventListener("click", () => {
+                    itemsSeleccionados.splice(index, 1);
+                    renderizarItems();
+                });
+                listaItemsUl.appendChild(li);
+            });
+        }
+
+        document.getElementById("btn-agregar-item").addEventListener("click", () => {
+            ocultarAlerta(alertaPedido);
+            const codigo = selProducto.value;
+            const cantidad = Number(document.getElementById("sel-cantidad").value);
+
+            if (!codigo) {
+                mostrarAlerta(alertaPedido, "Selecciona un producto válido antes de agregar.", "error");
+                return;
+            }
+            if (cantidad <= 0) {
+                mostrarAlerta(alertaPedido, "La cantidad debe ser mayor a cero.", "error");
+                return;
+            }
+
+            const prod = catalogoProductos.find(p => p.codigo === codigo);
+            const existente = itemsSeleccionados.find(i => i.codigoProducto === codigo);
+
+            if (existente) {
+                existente.cantidad += cantidad;
+            } else {
+                itemsSeleccionados.push({
+                    codigoProducto: codigo,
+                    nombre: prod ? prod.nombre : codigo,
+                    cantidad
+                });
+            }
+            renderizarItems();
+        });
+
+        document.getElementById("form-pedido").addEventListener("submit", async (e) => {
+            e.preventDefault();
+            ocultarAlerta(alertaPedido);
+
+            if (itemsSeleccionados.length === 0) {
+                mostrarAlerta(alertaPedido, "Debes agregar al menos un producto a la orden.", "error");
+                return;
+            }
+
+            const tipo = selectTipo.value;
+            const numeroPedido = Number(document.getElementById("ped-numero").value);
+            const itemsPayload = itemsSeleccionados.map(i => ({
+                codigoProducto: i.codigoProducto,
+                cantidad: i.cantidad
+            }));
+
+            let endpoint = "";
+            let payload = {};
+
+            if (tipo === "mesa") {
+                endpoint = "/Pedidos/mesa";
+                payload = {
+                    numeroPedido,
+                    numeroMesa: Number(document.getElementById("mesa-numero").value),
+                    capacidadMesa: Number(document.getElementById("mesa-capacidad").value),
+                    items: itemsPayload
+                };
+            } else if (tipo === "para-llevar") {
+                const horaVal = document.getElementById("llevar-hora").value;
+                endpoint = "/Pedidos/para-llevar";
+                payload = {
+                    numeroPedido,
+                    nombreCliente: document.getElementById("llevar-cliente").value.trim(),
+                    empaqueEspecial: document.getElementById("llevar-empaque").checked,
+                    horaEstimadaRecogida: horaVal ? horaVal : null,
+                    items: itemsPayload
+                };
+            } else {
+                endpoint = "/Pedidos/domicilio";
+                payload = {
+                    numeroPedido,
+                    direccion: document.getElementById("dom-direccion").value.trim(),
+                    nombreRepartidor: document.getElementById("dom-repartidor").value.trim(),
+                    telefonoRepartidor: document.getElementById("dom-telefono").value.trim(),
+                    nombreZona: document.getElementById("dom-zona").value.trim(),
+                    costoEnvio: Number(document.getElementById("dom-costo").value),
+                    tiempoEstimadoMinutos: Number(document.getElementById("dom-tiempo").value),
+                    items: itemsPayload
+                };
+            }
+
+            try {
+                const creado = await consumirApi(endpoint, {
+                    method: "POST",
+                    body: JSON.stringify(payload)
+                });
+
+                mostrarAlerta(alertaPedido, `¡Orden #${creado.numero} registrada y enviada exitosamente!`, "success");
+                resultadoPedido.className = "status-box status-success";
+                resultadoPedido.innerHTML = `
+                        <p><strong>Orden N°:</strong> ${creado.numero}</p>
+                        <p><strong>Estado actual:</strong> ${creado.estado}</p>
+                        <p><strong>Productos incluidos:</strong> ${creado.detalles ? creado.detalles.length : itemsPayload.length}</p>
+                        <p><a href="cocina.html">Abrir Monitor de Cocina para gestionar su preparación →</a></p>
+                    `;
+
+                itemsSeleccionados = [];
+                renderizarItems();
+                e.target.reset();
+                actualizarVisibilidadCampos();
+            } catch (error) {
+                mostrarAlerta(alertaPedido, error.message, "error");
+            }
+        });
+
+        selectTipo.addEventListener("change", actualizarVisibilidadCampos);
+        actualizarVisibilidadCampos();
+        cargarCatalogoSelect();
+    </script>
+</body>
+</html>

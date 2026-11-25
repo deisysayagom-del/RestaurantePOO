@@ -1,0 +1,162 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Monitor de Cocina · ComandaPro</title>
+    <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+    <a href="#contenido-principal" class="skip-link">Saltar al contenido principal</a>
+
+    <header>
+        <div class="header-inner">
+            <div class="brand">
+                <img src="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='36' height='36' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='2'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Cpath d='M8 12h8M12 8v8'/%3E%3C/svg%3E"
+                     alt="Logotipo de ComandaPro" width="36" height="36" />
+                <h1>ComandaPro · Gestión Gastronómica</h1>
+            </div>
+            <nav aria-label="Navegación principal">
+                <ul>
+                    <li><a href="index.html">1. Menú y Productos</a></li>
+                    <li><a href="pedidos.html">2. Toma de Pedidos</a></li>
+                    <li><a href="cocina.html" aria-current="page">3. Monitor de Cocina</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main id="contenido-principal">
+        <section class="card" aria-labelledby="titulo-monitor">
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem; margin-bottom:1rem;">
+                <div>
+                    <h2 id="titulo-monitor" style="margin:0;">Monitor de Cocina y Despacho</h2>
+                    <p style="margin:0.25rem 0 0; color:var(--text-muted);">
+                        Control en tiempo real: Registrado → Confirmado (descuenta insumos) → En Preparación → Listo → Entregado
+                    </p>
+                </div>
+
+                <div style="display:flex; gap:0.75rem; align-items:flex-end; flex-wrap:wrap;">
+                    <div>
+                        <label for="filtro-estado">Filtrar órdenes por estado</label>
+                        <select id="filtro-estado">
+                            <option value="TODOS">Todas las órdenes</option>
+                            <option value="Registrado">Registrado</option>
+                            <option value="Confirmado">Confirmado</option>
+                            <option value="EnPreparacion">En Preparación</option>
+                            <option value="Listo">Listo</option>
+                            <option value="Entregado">Entregado</option>
+                        </select>
+                    </div>
+                    <button type="button" id="btn-refrescar" class="btn-secondary">Actualizar</button>
+                </div>
+            </div>
+
+            <div id="alerta-cocina" class="status-box hidden" role="alert" aria-live="assertive"></div>
+            <div id="carga-cocina" class="status-box status-loading" role="status">Cargando comandas activas...</div>
+            <div id="vacio-cocina" class="status-box status-empty hidden">No hay órdenes registradas para el filtro seleccionado.</div>
+            <div id="lista-pedidos" class="grid-cards"></div>
+        </section>
+    </main>
+
+    <footer>
+        Hecho con ❤️ · ComandaPro · Gestión Gastronómica · 2026
+    </footer>
+
+    <script src="app.js"></script>
+    <script>
+        const listaPedidos = document.getElementById("lista-pedidos");
+        const cargaCocina = document.getElementById("carga-cocina");
+        const vacioCocina = document.getElementById("vacio-cocina");
+        const alertaCocina = document.getElementById("alerta-cocina");
+        const filtroEstado = document.getElementById("filtro-estado");
+
+        async function cargarPedidos() {
+            cargaCocina.classList.remove("hidden");
+            vacioCocina.classList.add("hidden");
+            listaPedidos.innerHTML = "";
+
+            try {
+                const pedidos = await consumirApi("/Pedidos");
+                cargaCocina.classList.add("hidden");
+
+                const estadoSeleccionado = filtroEstado.value;
+                const filtrados = estadoSeleccionado === "TODOS"
+                    ? pedidos
+                    : pedidos.filter(p => p.estado === estadoSeleccionado);
+
+                if (!filtrados || filtrados.length === 0) {
+                    vacioCocina.classList.remove("hidden");
+                    return;
+                }
+
+                filtrados.forEach(pedido => {
+                    const esFinal = pedido.estado === "Entregado";
+                    const detallesHtml = (pedido.detalles || []).map(d => {
+                        const nombreProd = d.producto?.nombre || d.productoCodigo;
+                        return `<li>${d.cantidad}x ${nombreProd}</li>`;
+                    }).join("");
+
+                    const card = document.createElement("article");
+                    card.className = "order-card";
+                    card.innerHTML = `
+                            <div>
+                                <div style="display:flex; justify-content:space-between; align-items:center; gap:0.5rem;">
+                                    <h3 style="margin:0;">Orden #${pedido.numero}</h3>
+                                    <span class="badge badge-${pedido.estado}">${pedido.estado}</span>
+                                </div>
+                                <p style="font-size:0.85rem; color:var(--text-muted); margin:0.35rem 0 0.75rem;">
+                                    Hora de ingreso: ${new Date(pedido.fechaHora).toLocaleString("es-CO")}
+                                </p>
+                                <ul style="padding-left:1.2rem; margin:0;">
+                                    ${detallesHtml || "<li>Sin productos asociados</li>"}
+                                </ul>
+                            </div>
+                            <button type="button" class="btn-primary" ${esFinal ? "disabled" : ""}>
+                                ${esFinal ? "Orden Entregada ✓" : "Avanzar Estado →"}
+                            </button>
+                        `;
+
+                    const btnAvanzar = card.querySelector("button");
+                    if (!esFinal) {
+                        btnAvanzar.addEventListener("click", async () => {
+                            ocultarAlerta(alertaCocina);
+                            btnAvanzar.disabled = true;
+                            try {
+                                const actualizado = await consumirApi(`/Pedidos/${pedido.numero}/avanzar-estado`, {
+                                    method: "PUT"
+                                });
+                                mostrarAlerta(
+                                    alertaCocina,
+                                    `La orden #${actualizado.numero} avanzó a estado '${actualizado.estado}'.`,
+                                    "success"
+                                );
+                                cargarPedidos();
+                            } catch (error) {
+                                btnAvanzar.disabled = false;
+                                mostrarAlerta(alertaCocina, error.message, "error");
+                            }
+                        });
+                    }
+
+                    listaPedidos.appendChild(card);
+                });
+            } catch (error) {
+                cargaCocina.classList.add("hidden");
+                mostrarAlerta(alertaCocina, error.message, "error");
+            }
+        }
+
+        filtroEstado.addEventListener("change", () => {
+            ocultarAlerta(alertaCocina);
+            cargarPedidos();
+        });
+        document.getElementById("btn-refrescar").addEventListener("click", () => {
+            ocultarAlerta(alertaCocina);
+            cargarPedidos();
+        });
+
+        cargarPedidos();
+    </script>
+</body>
+</html>

@@ -1,0 +1,297 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Menú y Productos · ComandaPro</title>
+    <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+    <a href="#contenido-principal" class="skip-link">Saltar al contenido principal</a>
+
+    <header>
+        <div class="header-inner">
+            <div class="brand">
+                <img src="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='36' height='36' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='2'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Cpath d='M8 12h8M12 8v8'/%3E%3C/svg%3E"
+                     alt="Logotipo de ComandaPro" width="36" height="36" />
+                <h1>ComandaPro · Gestión Gastronómica</h1>
+            </div>
+            <nav aria-label="Navegación principal">
+                <ul>
+                    <li><a href="index.html" aria-current="page">1. Menú y Productos</a></li>
+                    <li><a href="pedidos.html">2. Toma de Pedidos</a></li>
+                    <li><a href="cocina.html">3. Monitor de Cocina</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main id="contenido-principal">
+        <section class="card" aria-labelledby="titulo-catalogo">
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.75rem; margin-bottom:1rem;">
+                <h2 id="titulo-catalogo" style="margin:0;">Carta y Productos Disponibles</h2>
+                <div class="checkbox-row">
+                    <input type="checkbox" id="filtro-disponibles" />
+                    <label for="filtro-disponibles">Mostrar solo productos con disponibilidad inmediata</label>
+                </div>
+            </div>
+
+            <div id="alerta-catalogo" class="status-box hidden" role="alert" aria-live="assertive"></div>
+            <div id="carga-catalogo" class="status-box status-loading" role="status">Cargando menú y productos disponibles...</div>
+            <div id="vacio-catalogo" class="status-box status-empty hidden">Aún no hay productos registrados en la carta.</div>
+            <div id="lista-productos" class="grid-cards"></div>
+        </section>
+
+        <div class="grid-2">
+            <!-- Formulario Bebida -->
+            <section class="card" aria-labelledby="titulo-bebida">
+                <h2 id="titulo-bebida">Registrar Nueva Bebida</h2>
+                <div id="alerta-bebida" class="status-box hidden" role="alert" aria-live="polite"></div>
+
+                <form id="form-bebida">
+                    <div class="form-group">
+                        <label for="beb-codigo">Código de bebida</label>
+                        <input type="text" id="beb-codigo" placeholder="Ej: BEB-001" required />
+                    </div>
+                    <div class="form-group">
+                        <label for="beb-nombre">Nombre de la bebida</label>
+                        <input type="text" id="beb-nombre" placeholder="Ej: Jugo de Mango" required />
+                    </div>
+                    <div class="form-group">
+                        <label for="beb-precio">Precio al público (COP)</label>
+                        <input type="number" id="beb-precio" min="1" step="100" required />
+                    </div>
+                    <div class="form-group">
+                        <label for="beb-insumo">Insumo principal</label>
+                        <input type="text" id="beb-insumo" placeholder="Ej: Pulpa de Mango" required />
+                    </div>
+                    <div class="form-group">
+                        <label for="beb-stock">Inventario inicial disponible</label>
+                        <input type="number" id="beb-stock" min="1" step="1" value="20" required />
+                    </div>
+                    <div class="form-group">
+                        <label for="beb-costo">Costo por unidad de insumo (COP)</label>
+                        <input type="number" id="beb-costo" min="0" step="100" value="1000" required />
+                    </div>
+                    <div class="form-group">
+                        <label for="beb-cantidad">Consumo por bebida servida</label>
+                        <input type="number" id="beb-cantidad" min="0.1" step="0.1" value="1" required />
+                    </div>
+                    <button type="submit" class="btn-primary">Guardar Bebida en Carta</button>
+                </form>
+            </section>
+
+            <!-- Formulario Plato -->
+            <section class="card" aria-labelledby="titulo-plato">
+                <h2 id="titulo-plato">Registrar Nuevo Plato</h2>
+                <div id="alerta-plato" class="status-box hidden" role="alert" aria-live="polite"></div>
+
+                <form id="form-plato">
+                    <div class="form-group">
+                        <label for="plt-codigo">Código del plato</label>
+                        <input type="text" id="plt-codigo" placeholder="Ej: PLT-001" required />
+                    </div>
+                    <div class="form-group">
+                        <label for="plt-nombre">Nombre del plato</label>
+                        <input type="text" id="plt-nombre" placeholder="Ej: Hamburguesa Artesanal" required />
+                    </div>
+                    <div class="form-group">
+                        <label for="plt-precio">Precio al público (COP)</label>
+                        <input type="number" id="plt-precio" min="1" step="100" required />
+                    </div>
+                    <div class="form-group">
+                        <label for="plt-estacion">Estación de preparación</label>
+                        <input type="text" id="plt-estacion" placeholder="Ej: Parrilla" required />
+                    </div>
+                    <div class="form-group">
+                        <label for="plt-capacidad">Capacidad simultánea de la estación</label>
+                        <input type="number" id="plt-capacidad" min="1" value="10" required />
+                    </div>
+
+                    <fieldset style="border:1px solid #cbd5e1; border-radius:6px; padding:0.8rem; margin-bottom:1rem;">
+                        <legend style="font-weight:700;">Ingredientes de la receta</legend>
+                        <div id="contenedor-ingredientes"></div>
+                        <button type="button" id="btn-agregar-ing" class="btn-secondary">+ Agregar otro ingrediente</button>
+                    </fieldset>
+
+                    <button type="submit" class="btn-primary">Guardar Plato en Carta</button>
+                </form>
+            </section>
+        </div>
+    </main>
+
+    <footer>
+        Hecho con ❤️ · ComandaPro · Gestión Gastronómica · 2026
+    </footer>
+
+    <script src="app.js"></script>
+    <script>
+        const listaProductos = document.getElementById("lista-productos");
+        const cargaCatalogo = document.getElementById("carga-catalogo");
+        const vacioCatalogo = document.getElementById("vacio-catalogo");
+        const alertaCatalogo = document.getElementById("alerta-catalogo");
+        const filtroDisponibles = document.getElementById("filtro-disponibles");
+        const contenedorIngredientes = document.getElementById("contenedor-ingredientes");
+
+        let contadorIngredientes = 0;
+
+        function agregarFilaIngrediente() {
+            contadorIngredientes++;
+            const idx = contadorIngredientes;
+            const div = document.createElement("div");
+            div.className = "ingrediente-item";
+            div.innerHTML = `
+                    <div class="form-group">
+                        <label for="ing-nombre-${idx}">Nombre del ingrediente #${idx}</label>
+                        <input type="text" id="ing-nombre-${idx}" class="ing-nombre" placeholder="Ej: Carne de res" required />
+                    </div>
+                    <div class="form-group">
+                        <label for="ing-cant-${idx}">Cantidad por porción</label>
+                        <input type="number" id="ing-cant-${idx}" class="ing-cant" min="0.1" step="0.1" value="1" required />
+                    </div>
+                    <div class="form-group">
+                        <label for="ing-stock-${idx}">Inventario inicial</label>
+                        <input type="number" id="ing-stock-${idx}" class="ing-stock" min="1" step="1" value="30" required />
+                    </div>
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label for="ing-costo-${idx}">Costo unitario (COP)</label>
+                        <input type="number" id="ing-costo-${idx}" class="ing-costo" min="0" step="100" value="2500" required />
+                    </div>
+                `;
+            contenedorIngredientes.appendChild(div);
+        }
+
+        async function cargarProductos() {
+            ocultarAlerta(alertaCatalogo);
+            cargaCatalogo.classList.remove("hidden");
+            vacioCatalogo.classList.add("hidden");
+            listaProductos.innerHTML = "";
+
+            const ruta = filtroDisponibles.checked ? "/Productos/disponibles" : "/Productos";
+
+            try {
+                const productos = await consumirApi(ruta);
+                cargaCatalogo.classList.add("hidden");
+
+                if (!productos || productos.length === 0) {
+                    vacioCatalogo.classList.remove("hidden");
+                    return;
+                }
+
+                productos.forEach(prod => {
+                    const esBebida = prod.insumoDirecto != null || prod.codigo.toUpperCase().startsWith("BEB");
+                    const icono = esBebida ? ICONO_BEBIDA : ICONO_PLATO;
+                    const altTexto = esBebida ? `Icono de bebida ${prod.nombre}` : `Icono de plato ${prod.nombre}`;
+                    const tipoEtiqueta = esBebida ? "Bebida" : (prod.componentes ? "Combo" : "Plato");
+
+                    const card = document.createElement("article");
+                    card.className = "product-card";
+                    card.innerHTML = `
+                            <div>
+                                <div class="product-header">
+                                    <img src="${icono}" alt="${altTexto}" width="44" height="44" />
+                                    <div>
+                                        <span class="badge badge-Confirmado">${tipoEtiqueta} · ${prod.codigo}</span>
+                                        <h3 style="margin:0.25rem 0 0;">${prod.nombre}</h3>
+                                    </div>
+                                </div>
+                                <p style="font-size:1.1rem; font-weight:700; margin:0.75rem 0 0;">
+                                    Precio: ${formatearMoneda(prod.precio)}
+                                </p>
+                            </div>
+                            <button type="button" class="btn-danger" data-codigo="${prod.codigo}">Eliminar de la carta</button>
+                        `;
+
+                    card.querySelector("button").addEventListener("click", async () => {
+                        if (!confirm(`¿Deseas retirar ${prod.nombre} (${prod.codigo}) de la carta?`)) return;
+                        try {
+                            await consumirApi(`/Productos/${encodeURIComponent(prod.codigo)}`, { method: "DELETE" });
+                            cargarProductos();
+                        } catch (err) {
+                            mostrarAlerta(alertaCatalogo, err.message, "error");
+                        }
+                    });
+
+                    listaProductos.appendChild(card);
+                });
+            } catch (error) {
+                cargaCatalogo.classList.add("hidden");
+                mostrarAlerta(alertaCatalogo, error.message, "error");
+            }
+        }
+
+        document.getElementById("form-bebida").addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const alerta = document.getElementById("alerta-bebida");
+            ocultarAlerta(alerta);
+
+            const payload = {
+                codigo: document.getElementById("beb-codigo").value.trim(),
+                nombre: document.getElementById("beb-nombre").value.trim(),
+                precio: Number(document.getElementById("beb-precio").value),
+                nombreInsumo: document.getElementById("beb-insumo").value.trim(),
+                stockInicial: Number(document.getElementById("beb-stock").value),
+                costoUnidad: Number(document.getElementById("beb-costo").value),
+                fechaVencimiento: null,
+                cantidadRequerida: Number(document.getElementById("beb-cantidad").value)
+            };
+
+            try {
+                await consumirApi("/Productos/bebida", {
+                    method: "POST",
+                    body: JSON.stringify(payload)
+                });
+                e.target.reset();
+                mostrarAlerta(alerta, `La bebida '${payload.nombre}' se registró correctamente en la carta.`, "success");
+                cargarProductos();
+            } catch (error) {
+                mostrarAlerta(alerta, error.message, "error");
+            }
+        });
+
+        document.getElementById("form-plato").addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const alerta = document.getElementById("alerta-plato");
+            ocultarAlerta(alerta);
+
+            const filas = contenedorIngredientes.querySelectorAll(".ingrediente-item");
+            const ingredientes = Array.from(filas).map(fila => ({
+                nombreInsumo: fila.querySelector(".ing-nombre").value.trim(),
+                cantidad: Number(fila.querySelector(".ing-cant").value),
+                stockInicial: Number(fila.querySelector(".ing-stock").value),
+                costoUnidad: Number(fila.querySelector(".ing-costo").value)
+            }));
+
+            const payload = {
+                codigo: document.getElementById("plt-codigo").value.trim(),
+                nombre: document.getElementById("plt-nombre").value.trim(),
+                precio: Number(document.getElementById("plt-precio").value),
+                nombreEstacion: document.getElementById("plt-estacion").value.trim(),
+                capacidadEstacion: Number(document.getElementById("plt-capacidad").value),
+                ingredientes
+            };
+
+            try {
+                await consumirApi("/Productos/plato", {
+                    method: "POST",
+                    body: JSON.stringify(payload)
+                });
+                e.target.reset();
+                contenedorIngredientes.innerHTML = "";
+                contadorIngredientes = 0;
+                agregarFilaIngrediente();
+                mostrarAlerta(alerta, `El plato '${payload.nombre}' se registró correctamente en la carta.`, "success");
+                cargarProductos();
+            } catch (error) {
+                mostrarAlerta(alerta, error.message, "error");
+            }
+        });
+
+        document.getElementById("btn-agregar-ing").addEventListener("click", agregarFilaIngrediente);
+        filtroDisponibles.addEventListener("change", cargarProductos);
+
+        agregarFilaIngrediente();
+        cargarProductos();
+    </script>
+</body>
+</html>
