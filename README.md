@@ -2,9 +2,11 @@
 
 Aplicación web y API REST desarrollada en C# (.NET 10) para administrar el catálogo de productos, la toma de pedidos (en mesa, para llevar y a domicilio) y el flujo de estados en cocina con descuento automático de inventario en SQL Server.
 
-## Integrante
+## Integrantes
 
 * Deisy Alexandra Sayago Mestra
+* Oscar Javier Bello Poveda
+* Juan Felipe Suarez Echeverri
 
 ## Estructura del proyecto
 
